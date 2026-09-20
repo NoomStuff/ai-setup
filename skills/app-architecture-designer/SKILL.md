@@ -1,6 +1,6 @@
 ---
 name: app-architecture-designer
-description: Design new app architecture, review existing apps, or refactor substantial structural and code-quality problems. Use for architecture decisions and full app reviews, not routine local fixes or visual polish alone.
+description: Design new app architecture, review existing apps, or refactor substantial structural and code-quality problems. Use for important architecture decisions and full app reviews.
 ---
 
 # App architecture
@@ -29,7 +29,7 @@ Inspect reference projects when the user supplies them. Be deliberate about what
 
 ## Structure and code quality
 
-- Use strict types across the implementation and its boundaries. Check that the tooling actually enforces them.
+- Use strict types across the implementation and its boundaries when available. Check that the tooling actually enforces them.
 - Give state and behavior clear owners. Keep state local until sharing it has a purpose, and avoid duplicate representations that can drift apart.
 - Split by responsibility, reuse, or meaningful boundaries. Avoid both unrelated logic in one massive file and tiny files that scatter a simple operation.
 - Reuse components and functions where repetition is meaningful. Abstractions should make the next change easier to follow.
@@ -38,12 +38,20 @@ Inspect reference projects when the user supplies them. Be deliberate about what
 
 Fewer lines are useful only when the result stays clear and preserves the required behavior. Do not quietly remove guarantees or user data to simplify an implementation. Explain changes that are not an obvious improvement.
 
+## Tests
+
+Use the project's relevant formatting, lint, strict type checks, build, and tests.
+
+- Tests should protect meaningful behavior or real failure modes.
+- Avoid duplicate coverage and assertions that only restate the implementation.
+- Tests have to remain useful and relevant even after the current work is done. Remove or rewrite tests that are no longer meaningful. Clean up temporary tests and do not add uselessly minute coverage.
+- Pick testing methods that are most useful for the app, implement features that allow agents like you to easily and confidently verify changes & app state when applicable. Sometimes unit tests are fine, but other times the app actually needs to be run and interacted with.
+- We do not need 100% coverage, just be confident that the most critical parts don't regress.
+
 ## Preserve behavior and verify
 
-Compare the actual app before and after structural changes. Startup, restored state, and the primary flow have repeatedly regressed despite passing builds. Run those paths in the real runtime when affected; launching a process alone proves little. **Regressions are a NO GO**.
+Compare the actual app before and after structural changes. **Regressions are a NO GO**.
 
 Investigate performance with workloads relevant to the app. Check whether the change improves responsiveness and resource use while retaining the expected results.
-
-Use the project's relevant formatting, lint, strict type checks, build, and tests. Tests should protect meaningful behavior or real failure modes. Avoid duplicate coverage and assertions that only restate the implementation.
 
 Report what changed, why it helps, and what was verified. Call out intentional behavior changes, non-obvious tradeoffs, remaining concerns, and anything important that could not be checked.

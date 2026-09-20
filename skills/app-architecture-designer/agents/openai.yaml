@@ -1,0 +1,4 @@
+interface:
+  display_name: "App Architecture Designer"
+  short_description: "Design new app architecture, review existing apps, or refactor substantial structural and code-quality problems."
+  default_prompt: "Use $app-architecture-designer for important architecture decisions and full app reviews."
