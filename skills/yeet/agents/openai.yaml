@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yeet"
+  short_description: "Commit and push finished changes"
+  default_prompt: "Use $yeet when the user prompt contains 'yeet' or you are asked to commit and push changes."

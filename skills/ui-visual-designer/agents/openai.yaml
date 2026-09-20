@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Visual Designer"
+  short_description: "Polish visual UI without AI-default sameness"
+  default_prompt: "Use $ui-visual-designer to make this app look better while fitting its existing style."

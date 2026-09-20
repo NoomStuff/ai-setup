@@ -1,0 +1,4 @@
+interface:
+  display_name: "UX Product Designer"
+  short_description: "Design usable flows, features, and interactions"
+  default_prompt: "Use $ux-product-designer to inspect this feature flow and improve the product design."

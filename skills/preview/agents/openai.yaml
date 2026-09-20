@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preview"
+  short_description: "Live push to a preview environment after every turn"
+  default_prompt: "Use $preview when the user has requested a preview."

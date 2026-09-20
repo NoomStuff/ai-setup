@@ -1,0 +1,4 @@
+interface:
+  display_name: "Osiris Theme Designer"
+  short_description: "Create distinct color themes for Better Osiris"
+  default_prompt: "Use $osiris-theme-designer to create or improve a theme in this Better Osiris project."
