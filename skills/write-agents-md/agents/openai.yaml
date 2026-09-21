@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write AGENTS.md"
+  short_description: "Write useful project AGENTS.md files"
+  default_prompt: "Use $write_agents_md when the user asks to write or improve the project's AGENTS.md file."
