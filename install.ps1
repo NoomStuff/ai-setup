@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+    [string] $UserHome = [Environment]::GetFolderPath('UserProfile')
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -8,7 +10,7 @@ $repositoryRoot = $PSScriptRoot
 $sourceAgents = Join-Path $repositoryRoot 'AGENTS.md'
 $sourceSkills = Join-Path $repositoryRoot 'skills'
 
-$userHome = [Environment]::GetFolderPath('UserProfile')
+$userHome = [System.IO.Path]::GetFullPath($UserHome).TrimEnd([char[]]@('\', '/'))
 $backupRoot = Join-Path (Join-Path $userHome '.ai-setup-backup') (Get-Date -Format 'yyyyMMdd-HHmmss')
 
 $agentsTargets = @(
@@ -271,13 +273,16 @@ function Ensure-RealDirectory
     New-Item -ItemType Directory -Path $Path -Force | Out-Null
 }
 
-function Clear-SkillTarget
+function Clear-ManagedSkillTarget
 {
     param(
         [Parameter(Mandatory)]
         [string] $Path,
 
-        [string[]] $ExcludedNames = @()
+        [string[]] $ExcludedNames = @(),
+
+        [Parameter(Mandatory)]
+        [string] $ManagedSourceRoot
     )
 
     Ensure-RealDirectory -Path $Path
@@ -290,8 +295,40 @@ function Clear-SkillTarget
             continue
         }
 
-        Backup-Item -Path $item.FullName
-        Remove-PathSafe -Path $item.FullName
+        if (-not (Test-ReparsePoint -Item $item))
+        {
+            continue
+        }
+
+        $isManaged = $false
+
+        foreach ($linkTarget in (Get-LinkTargets -Item $item))
+        {
+            if ([string]::IsNullOrWhiteSpace($linkTarget))
+            {
+                continue
+            }
+
+            if ([System.IO.Path]::IsPathRooted($linkTarget))
+            {
+                $candidate = $linkTarget
+            }
+            else
+            {
+                $candidate = Join-Path $item.Parent.FullName $linkTarget
+            }
+
+            if (Test-IsSameOrChildPath -Path $candidate -ParentPath $ManagedSourceRoot)
+            {
+                $isManaged = $true
+                break
+            }
+        }
+
+        if ($isManaged)
+        {
+            Remove-PathSafe -Path $item.FullName
+        }
     }
 }
 
@@ -376,12 +413,20 @@ foreach ($target in $agentsTargets)
 
     if ($null -ne $existing)
     {
-        $sourceHash = (Get-FileHash -LiteralPath $sourceAgents -Algorithm SHA256).Hash
-        $targetHash = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
-
-        if ($sourceHash -ne $targetHash)
+        if ($existing.PSIsContainer -or (Test-ReparsePoint -Item $existing))
         {
             Backup-Item -Path $target
+            Remove-PathSafe -Path $target
+        }
+        else
+        {
+            $sourceHash = (Get-FileHash -LiteralPath $sourceAgents -Algorithm SHA256).Hash
+            $targetHash = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+
+            if ($sourceHash -ne $targetHash)
+            {
+                Backup-Item -Path $target
+            }
         }
     }
 
@@ -390,9 +435,10 @@ foreach ($target in $agentsTargets)
 
 foreach ($targetDefinition in $skillTargets)
 {
-    Clear-SkillTarget `
+    Clear-ManagedSkillTarget `
         -Path $targetDefinition.Path `
-        -ExcludedNames $targetDefinition.ExcludedNames
+        -ExcludedNames $targetDefinition.ExcludedNames `
+        -ManagedSourceRoot $sourceSkills
 
     foreach ($skill in $skills)
     {

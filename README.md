@@ -1,22 +1,24 @@
 # AI setup
 
-Personal instructions and skills shared by Codex and ZCode.
+Personal instructions and skills shared by Codex, ZCode, and Claude Code.
 
 ## Layout
 
-- `AGENTS.md` contains global instructions for both agents.
+- `AGENTS.md` contains shared global instructions.
 - `skills/` contains personal skills. Each directory must contain `SKILL.md`.
-- `install.ps1` copies global instructions and creates skill junctions for Codex and ZCode.
+- `install.ps1` copies global instructions and creates skill junctions for each supported agent.
 - `verify.ps1` checks every managed link.
 
 The installer creates these files and links:
 
 | Consumer | Instructions copy | Skill junctions |
 | --- | --- | --- |
-| Codex | `~/.codex/AGENTS.md` | `~/.agents/skills/<name>` |
+| Shared agents | n/a | `~/.agents/skills/<name>` |
+| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills/<name>` |
 | ZCode | `~/.zcode/AGENTS.md` | `~/.zcode/skills/<name>` |
+| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/<name>` |
 
-Codex and ZCode read the same skill files from this repository. Windows does not allow cross-drive file hard links, and file symbolic links require Developer Mode or administrator rights. The installer therefore copies `AGENTS.md`; rerun it after editing that file.
+All supported agents read the same skill files from this repository. Windows does not allow cross-drive file hard links, and file symbolic links require Developer Mode or administrator rights. The installer therefore copies the instruction file; rerun it after editing `AGENTS.md`.
 
 ## Install
 
@@ -28,11 +30,11 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\verify.ps1
 ```
 
-The installer is safe to run again. Before replacing an ordinary file or directory, it copies the old content to a timestamped directory under `~/.ai-setup-backup`. It never changes Codex's bundled `.system` skills or ZCode's unrelated skills.
+The installer is safe to run again. Before replacing an ordinary file or directory, it copies the old content to a timestamped directory under `~/.ai-setup-backup`. It removes stale junctions previously managed by this repository, but leaves unrelated skills alone. It also preserves Codex's bundled `.system` skills.
 
 Skill directories use junctions and normally require neither Developer Mode nor administrator rights.
 
-Restart Codex after changing global instructions. In ZCode, start a new task after changing `AGENTS.md`; refresh the Skills page after adding a skill.
+Restart Codex or Claude Code after changing global instructions. In ZCode, start a new task after changing `AGENTS.md`. Refresh the relevant Skills page after adding a skill.
 
 ## Adding a skill
 

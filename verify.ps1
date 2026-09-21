@@ -1,11 +1,13 @@
 [CmdletBinding()]
-param()
+param(
+    [string] $UserHome = [Environment]::GetFolderPath('UserProfile')
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = $PSScriptRoot
-$userHome = [Environment]::GetFolderPath('UserProfile')
+$userHome = [System.IO.Path]::GetFullPath($UserHome).TrimEnd([char[]]@('\', '/'))
 
 $expectedAgents = Join-Path $repositoryRoot 'AGENTS.md'
 $expectedSkillsRoot = Join-Path $repositoryRoot 'skills'
@@ -219,9 +221,40 @@ foreach ($target in $skillTargets)
             continue
         }
 
-        if ($expectedSkillNames -notcontains $item.Name)
+        if (
+            $expectedSkillNames -notcontains $item.Name -and
+            (Test-ReparsePoint -Item $item)
+        )
         {
-            $failures.Add("Unexpected stale skill in $($target.Name): $($item.FullName)")
+            foreach ($linkTarget in (Get-LinkTargets -Item $item))
+            {
+                if ([string]::IsNullOrWhiteSpace($linkTarget))
+                {
+                    continue
+                }
+
+                if ([System.IO.Path]::IsPathRooted($linkTarget))
+                {
+                    $candidate = $linkTarget
+                }
+                else
+                {
+                    $candidate = Join-Path $item.Parent.FullName $linkTarget
+                }
+
+                $normalizedCandidate = Get-NormalizedPath -Path $candidate
+                $normalizedSkillsRoot = Get-NormalizedPath -Path $expectedSkillsRoot
+                $managedPrefix = $normalizedSkillsRoot + [System.IO.Path]::DirectorySeparatorChar
+
+                if ($normalizedCandidate.StartsWith(
+                    $managedPrefix,
+                    [System.StringComparison]::OrdinalIgnoreCase
+                ))
+                {
+                    $failures.Add("Unexpected stale managed skill in $($target.Name): $($item.FullName)")
+                    break
+                }
+            }
         }
     }
 }
