@@ -1,6 +1,6 @@
 # AI setup
 
-Personal instructions and skills shared by Codex, ZCode, and Claude Code.
+Personal instructions and skills shared by all providers.
 
 ## Layout
 
@@ -13,7 +13,7 @@ The installer creates these files and links:
 
 | Consumer | Instructions copy | Skill junctions |
 | --- | --- | --- |
-| Shared agents | n/a | `~/.agents/skills/<name>` |
+| Shared agents | - | `~/.agents/skills/<name>` |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/skills/<name>` |
 | ZCode | `~/.zcode/AGENTS.md` | `~/.zcode/skills/<name>` |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/<name>` |
@@ -30,14 +30,10 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\verify.ps1
 ```
 
-The installer is safe to run again. Before replacing an ordinary file or directory, it copies the old content to a timestamped directory under `~/.ai-setup-backup`. It removes stale junctions previously managed by this repository, but leaves unrelated skills alone. It also preserves Codex's bundled `.system` skills.
-
-Skill directories use junctions and normally require neither Developer Mode nor administrator rights.
-
-Restart Codex or Claude Code after changing global instructions. In ZCode, start a new task after changing `AGENTS.md`. Refresh the relevant Skills page after adding a skill.
+This clones your AGENTS.md and skills into their respective folders
 
 ## Adding a skill
 
-Create `skills/<name>/SKILL.md`, commit it, and run `install.ps1` on each computer. Keep the YAML `name` equal to the directory name and keep `description` precise enough for automatic selection. Run `install.ps1` again after editing `AGENTS.md`.
+Make changes to your skills or `AGENTS.md`. Keep the YAML `name` equal to the directory name and keep `description` precise enough for automatic selection.
 
-Do not commit credentials, API keys, model-provider configuration, telemetry state, logs, or session history here.
+ `install.ps1` updates the files across your harnesses and will have to manually ran again after each change.
