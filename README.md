@@ -13,21 +13,13 @@ chmod +x setup
 ./setup
 ```
 
-Both launch the same menu:
+No tui alternative:
 
-```text
-AI setup
-4 enabled · 4 found
-────────────────────────────────────────────
-  1  Install or update            Copy instructions and skills
-  2  Choose apps                  4 enabled
-  3  Verify                       Check installed copies
-  4  Run on startup               off
-  5  Fetch updates automatically  off
-  6  Exit
+```sh
+./setup menu --no-tui
 ```
 
-The setup needs Bun or Node.js 18 or newer. It prefers Bun when both are installed.
+The setup needs Bun or Node.js 18 or newer.
 
 ## Settings
 
@@ -35,23 +27,9 @@ Startup and automatic fetching are off by default. Turn on `runOnStartup` to app
 
 Git hooks reapply the setup after you manually pull or rebase this repository.
 
-The ignored root [config.json](config.json) contains all user settings:
-
-```json
-{
-  "enabledHarnesses": ["codex", "copilot", "opencode", "zcode"],
-  "runOnStartup": false,
-  "autoFetch": false
-}
-```
-
-The setup creates this file on first open and the menu updates it afterward. Built-in fallback values live in `src/default-config.json`, so pulling changes never overwrites personal choices.
-
 ## Supported apps
 
-The menu supports Agent Skills, OpenAI Codex, Claude Code, Gemini CLI, GitHub Copilot CLI, Cursor, Windsurf, Cline, Roo Code, OpenCode, Google Antigravity, Kiro, Amp, Goose, and ZCode. It skips an app when its existing install folder cannot be found. It never creates a new app root merely because the preset exists.
-
-Codex receives `~/.codex/AGENTS.md` and `~/.codex/skills`. Copilot receives `~/.copilot/copilot-instructions.md` and `~/.copilot/skills`, which are the personal locations documented by GitHub.
+The menu supports Agent Skills, OpenAI Codex, Claude Code, Gemini CLI, GitHub Copilot CLI, Cursor, Windsurf, Cline, Roo Code, OpenCode, Google Antigravity, Kiro, Amp, Goose, and ZCode. It skips a harness when its existing install folder cannot be found.
 
 ## Repository layout
 
@@ -59,7 +37,7 @@ Codex receives `~/.codex/AGENTS.md` and `~/.codex/skills`. Copilot receives `~/.
 - `skills/` contains the skills.
 - `config.json` contains your app and automation choices.
 - `setup.cmd` and `setup` open the installer.
-- `src/` contains the installer and its fallback config.
+- `src/` contains the installer: `setup.mjs` dispatches commands, with `operations.mjs` doing the file work, `prompt.mjs` and `tui.mjs` holding the two menus, and `config.mjs`, `presets.mjs`, `ui.mjs`, `env.mjs` plus the fallback `default-config.json` beside them.
 
 Existing files are backed up under `~/.ai-setup-backup` before replacement. State under `~/.ai-setup-state` records only paths owned by this repository, so disabling an app or deleting a skill does not remove unrelated files.
 

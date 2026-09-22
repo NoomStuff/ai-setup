@@ -1,5 +1,7 @@
 {
-  "enabledHarnesses": ["codex", "copilot", "opencode", "zcode"],
+  "enabledHarnesses": ["agents", "codex", "claude", "gemini", "copilot", "cursor", "windsurf", "cline", "roo", "opencode", "antigravity", "kiro", "amp", "goose", "zcode"],
+  "disabledSkills": [],
+  "installMissing": false,
   "runOnStartup": false,
   "autoFetch": false
 }
