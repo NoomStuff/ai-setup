@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -eu
+if command -v bun >/dev/null 2>&1; then runtime=bun
+elif command -v node >/dev/null 2>&1; then runtime=node
+else echo 'AI setup needs Bun or Node.js 18 or newer.' >&2; exit 1
+fi
+root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$runtime" "$root/src/setup.mjs" "$@"

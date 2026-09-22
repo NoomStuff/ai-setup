@@ -1,0 +1,5 @@
+{
+  "enabledHarnesses": ["codex", "copilot", "opencode", "zcode"],
+  "runOnStartup": false,
+  "autoFetch": false
+}

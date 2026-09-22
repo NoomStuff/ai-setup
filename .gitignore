@@ -1,6 +1,7 @@
+config.json
+
 .idea/
 .vscode/
-*.local.*
 secrets/
 Thumbs.db
 .DS_Store

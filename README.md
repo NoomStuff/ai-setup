@@ -1,39 +1,77 @@
 # AI setup
 
-Personal instructions and skills shared by all providers.
+One setup screen installs the instructions and skills in this repository across the coding agents you use.
 
-## Layout
+## Open the setup
 
-- `AGENTS.md` contains shared global instructions.
-- `skills/` contains personal skills. Each directory must contain `SKILL.md`.
-- `install.ps1` copies global instructions and creates skill junctions for each supported agent.
-- `verify.ps1` checks every managed link.
+On Windows, double-click `setup.cmd`.
 
-The installer creates these files and links:
+On macOS or Linux, open a terminal in this directory once and run:
 
-| Consumer | Instructions copy | Skill junctions |
-| --- | --- | --- |
-| Shared agents | - | `~/.agents/skills/<name>` |
-| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills/<name>` |
-| ZCode | `~/.zcode/AGENTS.md` | `~/.zcode/skills/<name>` |
-| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/<name>` |
-
-All supported agents read the same skill files from this repository. Windows does not allow cross-drive file hard links, and file symbolic links require Developer Mode or administrator rights. The installer therefore copies the instruction file; rerun it after editing `AGENTS.md`.
-
-## Install
-
-Clone the repository, then run:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\install.ps1
-.\verify.ps1
+```sh
+chmod +x setup
+./setup
 ```
 
-This clones your AGENTS.md and skills into their respective folders
+Both launch the same menu:
 
-## Adding a skill
+```text
+AI setup
+4 enabled · 4 found
+────────────────────────────────────────────
+  1  Install or update            Copy instructions and skills
+  2  Choose apps                  4 enabled
+  3  Verify                       Check installed copies
+  4  Run on startup               off
+  5  Fetch updates automatically  off
+  6  Exit
+```
 
-Make changes to your skills or `AGENTS.md`. Keep the YAML `name` equal to the directory name and keep `description` precise enough for automatic selection.
+The setup needs Bun or Node.js 18 or newer. It prefers Bun when both are installed.
 
- `install.ps1` updates the files across your harnesses and will have to manually ran again after each change.
+## Settings
+
+Startup and automatic fetching are off by default. Turn on `runOnStartup` to apply the setup when you sign in. Turn on `autoFetch` to also pull changes every 15 minutes. The watcher accepts fast-forward updates only. It will not pull over local changes or merge divergent branches.
+
+Git hooks reapply the setup after you manually pull or rebase this repository.
+
+The ignored root [config.json](config.json) contains all user settings:
+
+```json
+{
+  "enabledHarnesses": ["codex", "copilot", "opencode", "zcode"],
+  "runOnStartup": false,
+  "autoFetch": false
+}
+```
+
+The setup creates this file on first open and the menu updates it afterward. Built-in fallback values live in `src/default-config.json`, so pulling changes never overwrites personal choices.
+
+## Supported apps
+
+The menu supports Agent Skills, OpenAI Codex, Claude Code, Gemini CLI, GitHub Copilot CLI, Cursor, Windsurf, Cline, Roo Code, OpenCode, Google Antigravity, Kiro, Amp, Goose, and ZCode. It skips an app when its existing install folder cannot be found. It never creates a new app root merely because the preset exists.
+
+Codex receives `~/.codex/AGENTS.md` and `~/.codex/skills`. Copilot receives `~/.copilot/copilot-instructions.md` and `~/.copilot/skills`, which are the personal locations documented by GitHub.
+
+## Repository layout
+
+- `AGENTS.md` contains the shared instructions.
+- `skills/` contains the skills.
+- `config.json` contains your app and automation choices.
+- `setup.cmd` and `setup` open the installer.
+- `src/` contains the installer and its fallback config.
+
+Existing files are backed up under `~/.ai-setup-backup` before replacement. State under `~/.ai-setup-state` records only paths owned by this repository, so disabling an app or deleting a skill does not remove unrelated files.
+
+## Direct commands
+
+The menu covers normal use. These commands are available for scripts:
+
+```sh
+./setup install
+./setup verify
+./setup list
+./setup watch
+```
+
+On Windows, replace `./setup` with `setup.cmd`.
