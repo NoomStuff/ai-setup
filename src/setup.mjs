@@ -59,6 +59,8 @@ try {
   }
   else throw new Error(`Unknown command "${command}".`);
 } catch (error) {
-  console.error(`ai-setup: ${error.message}`);
-  process.exitCode = 1;
+  if (error?.name !== 'AbortError') {
+    console.error(`ai-setup: ${error.message}`);
+    process.exitCode = 1;
+  }
 }

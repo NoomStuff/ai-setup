@@ -1,5 +1,22 @@
 import { stdout as output } from 'node:process';
 
+export function supportsUnicode(env = process.env, platform = process.platform) {
+  if (env.FORCE_UNICODE) return true;
+  if (env.NO_UNICODE) return false;
+  if (platform !== 'win32') return env.TERM !== 'linux';
+  return Boolean(env.CI || env.WT_SESSION || env.VSCODE_INJECTION || env.WINDOWS_TERMINAL
+    || env.TERMINUS_SUBLIME || env.ConEmuTask || env.HYPER)
+    || env.TERM_PROGRAM === 'vscode' || env.TERM_PROGRAM === 'WezTerm'
+    || env.TERM_PROGRAM === 'Hyper' || env.TERM_PROGRAM === 'Alacritty'
+    || env.TERM === 'xterm-256color' || env.TERM === 'alacritty' || env.TERM === 'wezterm';
+}
+
+export const unicode = supportsUnicode();
+
+export const sym = unicode
+  ? { check: '✓', dash: '–', rule: '─', right: '→', dot: '·', ellipsis: '…', upDown: '↑↓', back: '←' }
+  : { check: 'v', dash: '-', rule: '-', right: '->', dot: '-', ellipsis: '...', upDown: 'Up/Down', back: '<-' };
+
 const useColor = (output.isTTY ?? false) && !process.env.NO_COLOR;
 const paint = code => value => useColor ? `\x1b[${code}m${value}\x1b[0m` : value;
 export const bold = paint(1);
@@ -10,7 +27,7 @@ export const inverse = value => useColor ? `\x1b[7m${value}\x1b[0m` : value;
 export function printHeader(title, subtitle = '') {
   console.log(`\n${bold(title)}`);
   if (subtitle) console.log(dim(subtitle));
-  console.log(dim('─'.repeat(44)));
+  console.log(dim(sym.rule.repeat(44)));
 }
 
 export function printOptions(items) {
@@ -27,13 +44,13 @@ export function printOptions(items) {
   console.log();
 }
 
-export function menuItems(config, skillInfo) {
+export function menuItems(config, skillInfo, foundCount = 0) {
   return [
-    { key: 1, label: 'Update skills', detail: 'Copy instructions and enabled skills', action: 'update' },
-    { key: 2, label: 'Verify', detail: 'Check installed copies', action: 'verify' },
+    { key: 1, label: 'Apply setup', detail: 'Copy skills and instructions to the harnesses', action: 'update' },
+    { key: 2, label: 'Verify setup', detail: 'Check if installed copies are correct', action: 'verify' },
     { sep: true },
-    { key: 3, label: 'Choose harnesses', detail: `${config.enabledHarnesses.length} enabled`, action: 'harnesses' },
-    { key: 4, label: 'Choose skills', detail: skillInfo.detail, action: 'skills' },
+    { key: 3, label: 'Choose harnesses', detail: `${config.enabledHarnesses.length} apps enabled, ${foundCount} found`, action: 'harnesses' },
+    { key: 4, label: 'Choose skills', detail: `${skillInfo.enabled} of ${skillInfo.total} enabled`, action: 'skills' },
     { sep: true },
     { key: 5, label: 'Run on startup', detail: config.runOnStartup ? 'on' : 'off', action: 'startup' },
     { key: 6, label: 'Auto background updates', detail: config.autoFetch ? 'on' : 'off', action: 'autofetch' },
@@ -96,14 +113,14 @@ export async function ask(prompt, query) {
 
 export function printResultGroups(okTitle, okItems, skipTitle, skipItems) {
   if (okItems.length) {
-    console.log(`\n${green('✓')} ${bold(okTitle)}`);
+    console.log(`\n${green(sym.check)} ${bold(okTitle)}`);
     for (const item of okItems) {
       console.log(`  ${item.name}`);
       for (const line of item.lines) console.log(`    ${dim(line)}`);
     }
   }
   if (skipItems.length) {
-    console.log(`\n${dim('–')} ${bold(skipTitle)}`);
+    console.log(`\n${dim(sym.dash)} ${bold(skipTitle)}`);
     for (const item of skipItems) {
       console.log(`  ${item.name}`);
       for (const line of item.lines) console.log(`    ${dim(line)}`);

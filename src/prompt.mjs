@@ -2,8 +2,8 @@ import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { harnesses, harnessIsInstalled, presets } from './presets.mjs';
 import { savePreferences } from './config.mjs';
-import { install, setAutostart, sourceSkillNames, verify } from './operations.mjs';
-import { ask, menuItems, printHarnessOptions, printHeader, printOptions, printSkillOptions, skillInfoFor } from './ui.mjs';
+import { install, setAutostart, sourceSkillNames, verify, lastAppliedAt, formatAgo } from './operations.mjs';
+import { ask, menuItems, printHarnessOptions, printHeader, printOptions, printSkillOptions, skillInfoFor, sym } from './ui.mjs';
 
 export async function chooseHarnesses(config, prompt) {
   const ids = Object.keys(presets);
@@ -35,7 +35,7 @@ export async function chooseHarnesses(config, prompt) {
     config.enabledHarnesses = ids.filter(id => selected.has(id));
   }
   await savePreferences(config);
-  console.log(`\nSaved · ${config.enabledHarnesses.length} enabled`);
+  console.log(`\nSaved ${sym.dot} ${config.enabledHarnesses.length} enabled`);
 }
 
 export async function chooseSkills(config, prompt, allSkills = null) {
@@ -65,42 +65,67 @@ export async function chooseSkills(config, prompt, allSkills = null) {
   }
   await savePreferences(config);
   const kept = names.filter(name => !config.disabledSkills.includes(name)).length;
-  console.log(`\nSaved · ${kept} of ${names.length} enabled`);
+  console.log(`\nSaved ${sym.dot} ${kept} of ${names.length} enabled`);
 }
 
 export async function menuPrompt(config) {
   const prompt = createInterface({ input, output });
   try {
     while (true) {
-      const detectedCount = (await Promise.all(harnesses(config).map(harnessIsInstalled))).filter(Boolean).length;
-      const allSkills = await sourceSkillNames().catch(() => []);
-      printHeader('AI setup', `${config.enabledHarnesses.length} enabled · ${detectedCount} found`);
-      printOptions(menuItems(config, skillInfoFor(config, allSkills)));
-      const rawChoice = await ask(prompt, 'Choose an option: ');
-      if (rawChoice === null) return;
-      const choice = rawChoice.trim();
-      if (choice === '1') await install(config);
-      else if (choice === '2') await verify(config);
-      else if (choice === '3') {
-        await chooseHarnesses(config, prompt);
-      } else if (choice === '4') {
-        await chooseSkills(config, prompt, allSkills);
-      } else if (choice === '5') {
-        config.runOnStartup = !config.runOnStartup;
-        await savePreferences(config);
-        await setAutostart(config.runOnStartup, config.autoFetch);
-        console.log(`\nRun on startup: ${config.runOnStartup ? 'on' : 'off'}`);
-      } else if (choice === '6') {
-        config.autoFetch = !config.autoFetch;
-        await savePreferences(config);
-        await setAutostart(config.runOnStartup, config.autoFetch);
-        console.log(`\nAuto background updates: ${config.autoFetch ? 'on' : 'off'}`);
-      } else if (choice === '7') {
-        config.installMissing = !config.installMissing;
-        await savePreferences(config);
-        console.log(`\nDon't skip missing harnesses: ${config.installMissing ? 'on' : 'off'}`);
-      } else if (choice === '8' || choice === '') return;
-      else console.log('Enter a number from 1 to 8.');
+      try {
+        const list = harnesses(config);
+        const found = (await Promise.all(list.map(harnessIsInstalled))).filter(Boolean).length;
+        const applied = await lastAppliedAt().catch(() => null);
+        const allSkills = await sourceSkillNames().catch(() => []);
+        printHeader('AI setup', applied ? `Last applied ${formatAgo(applied)}` : 'Never applied - run Apply setup');
+        printOptions(menuItems(config, skillInfoFor(config, allSkills), found));
+        const rawChoice = await ask(prompt, 'Choose an option: ');
+        if (rawChoice === null) return;
+        const choice = rawChoice.trim();
+        if (choice === '1') await install(config);
+        else if (choice === '2') await verify(config);
+        else if (choice === '3') {
+          await chooseHarnesses(config, prompt);
+        } else if (choice === '4') {
+          await chooseSkills(config, prompt, allSkills);
+        } else if (choice === '5') {
+          const previous = config.runOnStartup;
+          config.runOnStartup = !previous;
+          try {
+            await setAutostart(config.runOnStartup, config.autoFetch);
+            await savePreferences(config);
+            console.log(`\nRun on startup: ${config.runOnStartup ? 'on' : 'off'}`);
+          } catch (error) {
+            config.runOnStartup = previous;
+            throw error;
+          }
+        } else if (choice === '6') {
+          const previous = config.autoFetch;
+          config.autoFetch = !previous;
+          try {
+            await setAutostart(config.runOnStartup, config.autoFetch);
+            await savePreferences(config);
+            console.log(`\nAuto background updates: ${config.autoFetch ? 'on' : 'off'}`);
+          } catch (error) {
+            config.autoFetch = previous;
+            throw error;
+          }
+        } else if (choice === '7') {
+          const previous = config.installMissing;
+          config.installMissing = !previous;
+          try {
+            await savePreferences(config);
+            console.log(`\nDon't skip missing harnesses: ${config.installMissing ? 'on' : 'off'}`);
+          } catch (error) {
+            config.installMissing = previous;
+            throw error;
+          }
+        } else if (choice === '8' || choice === '') return;
+        else console.log('Enter a number from 1 to 8.');
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        console.error(`\nError: ${String(error?.message ?? error).split('\n')[0]}`);
+      }
     }
   } finally { prompt.close(); }
 }

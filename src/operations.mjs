@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { exists, home, root, scriptPath, sourceInstructions, sourceSkills, statePath, timestamp } from './env.mjs';
 import { harnesses, harnessWillInstall, relativeHome, targetPath } from './presets.mjs';
 import { loadConfig } from './config.mjs';
-import { dim, printHeader, printResultGroups } from './ui.mjs';
+import { dim, printHeader, printResultGroups, sym } from './ui.mjs';
 
 export async function removeEmptyParents(path) {
   let current = dirname(path);
@@ -17,10 +17,20 @@ export async function removeEmptyParents(path) {
   }
 }
 
+export async function ensureDir(path) {
+  try {
+    await mkdir(path, { recursive: true });
+  } catch (error) {
+    if (error?.code !== 'EEXIST') throw error;
+    const info = await stat(path).catch(() => null);
+    if (!info || !info.isDirectory()) throw error;
+  }
+}
+
 export async function backup(path, backupRoot) {
   if (!await exists(path)) return;
   const destination = join(backupRoot, relative(home, path));
-  await mkdir(dirname(destination), { recursive: true });
+  await ensureDir(dirname(destination));
   await cp(path, destination, { recursive: true, dereference: false });
 }
 
@@ -29,7 +39,7 @@ export async function replace(source, destination, backupRoot) {
     if (!await sameContent(source, destination)) await backup(destination, backupRoot);
     await rm(destination, { recursive: true, force: true });
   }
-  await mkdir(dirname(destination), { recursive: true });
+  await ensureDir(dirname(destination));
   await cp(source, destination, { recursive: true });
 }
 
@@ -77,7 +87,7 @@ export async function install(config, opts = false) {
     }
     if (harness.skills) {
       const destination = targetPath(harness.skills);
-      await mkdir(destination, { recursive: true });
+      await ensureDir(destination);
       for (const skill of skillNames) {
         const skillDestination = join(destination, skill);
         await replace(join(sourceSkills, skill), skillDestination, backupRoot);
@@ -98,7 +108,7 @@ export async function install(config, opts = false) {
       await removeEmptyParents(previousPath);
     }
   }
-  await mkdir(dirname(statePath), { recursive: true });
+  await ensureDir(dirname(statePath));
   await writeFile(statePath, JSON.stringify({ version: 1, repository: root, managedPaths }, null, 2) + '\n');
   await configureHooks(config);
   await setAutostart(config.runOnStartup, config.autoFetch);
@@ -117,14 +127,14 @@ export async function install(config, opts = false) {
 
 export function renderInstallSummary(summary) {
   const { skillNames, results, activeHarnesses, skippedHarnesses, backupRoot, backupExists } = summary;
-  printHeader('Update complete', `${activeHarnesses.length} ready · ${skippedHarnesses.length} skipped`);
+  printHeader('Update complete', `${activeHarnesses.length} ready ${sym.dot} ${skippedHarnesses.length} skipped`);
   printResultGroups(
     `${activeHarnesses.length} updated`,
     results.map(result => ({
       name: result.harness.name,
       lines: [
-        result.instructions && `instructions → ${relativeHome(result.instructions)}`,
-        result.skills && `${skillNames.length} skills → ${relativeHome(result.skills)}`
+        result.instructions && `instructions ${sym.right} ${relativeHome(result.instructions)}`,
+        result.skills && `${skillNames.length} skills ${sym.right} ${relativeHome(result.skills)}`
       ].filter(Boolean)
     })),
     `${skippedHarnesses.length} skipped`,
@@ -164,7 +174,7 @@ export async function verify(config, opts = false) {
 
 export function renderVerifySummary(summary) {
   const { checked, skipped } = summary;
-  printHeader('Verification passed', `${checked.length} checked · ${skipped.length} skipped`);
+  printHeader('Verification passed', `${checked.length} checked ${sym.dot} ${skipped.length} skipped`);
   printResultGroups(
     `${checked.length} match`,
     checked.map(harness => ({ name: harness.name, lines: [matchDetail(harness)] })),
@@ -177,6 +187,23 @@ export function matchDetail(harness) {
   if (harness.instructions && harness.skills) return 'instructions and skills match';
   if (harness.instructions) return 'instructions match';
   return 'skills match';
+}
+
+export async function lastAppliedAt() {
+  const info = await stat(statePath).catch(() => null);
+  return info ? info.mtime : null;
+}
+
+export function formatAgo(date, now = new Date()) {
+  const seconds = Math.max(0, Math.floor((now - date) / 1000));
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return date.toLocaleDateString();
 }
 
 export function git(...gitArgs) {
@@ -194,7 +221,7 @@ export async function configureHooks(config) {
     let content = await readFile(path, 'utf8').catch(() => '#!/bin/sh\n');
     content = content.replace(new RegExp(`\\n?${markerStart}[\\s\\S]*?${markerEnd}\\n?`, 'g'), '\n');
     content += `\n${markerStart}\n${invocation}\n${markerEnd}\n`;
-    await mkdir(dirname(path), { recursive: true });
+    await ensureDir(dirname(path));
     await writeFile(path, content, { mode: 0o755 });
   }
 }
@@ -237,7 +264,7 @@ export async function setAutostart(enabled, autoFetch = false) {
     const quote = value => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
     content = `[Desktop Entry]\nType=Application\nName=AI Setup\nExec=${quote(process.execPath)} ${quote(scriptPath)} ${startupCommand}\nTerminal=false\nX-GNOME-Autostart-enabled=true\n`;
   }
-  await mkdir(dirname(path), { recursive: true });
+  await ensureDir(dirname(path));
   await writeFile(path, content, { mode: 0o755 });
 }
 
