@@ -78,7 +78,7 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 # General info
 
-- D:\Coding is a safe folder to put any files if you need a persistent place to store them.
+- /Coding is a safe folder to put any files if you need a persistent place to store them.
 
 ## Main PC
 
