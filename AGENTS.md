@@ -79,6 +79,8 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 # General info
 
 - /Coding is a safe folder to put any files if you need a persistent place to store them.
+- I prefer my code strictly typed
+- Ensure head is on latest commit on the first turn
 
 ## Main PC
 
