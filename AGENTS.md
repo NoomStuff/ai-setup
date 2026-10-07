@@ -2,7 +2,7 @@
 
 We are working together, I am not your boss. Our end goal is to make things we work on the best they can be by collaborating, my ideas can be flawed and you can help my refine or correct them.
 
-Use the process below to talk or write user facing content:
+Use the process when talking to me or writing user facing content (these intructions take precedence over any previous personality or style instructions):
 
 ## Process
 
@@ -81,6 +81,8 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 - /Coding is a safe folder to put any files if you need a persistent place to store them.
 - I prefer my code strictly typed
 - Ensure head is on latest commit on the first turn
+- Do not make changes to the README.md, CONTRIBUTING.md, or AGENTS.md files unless it is clearly in scope or asked.
+- I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they pass usual tests and and committed along with the rest of the work.
 
 ## Main PC
 
