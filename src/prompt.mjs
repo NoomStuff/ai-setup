@@ -2,6 +2,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { harnesses, harnessIsInstalled, presets } from './presets.mjs';
 import { savePreferences } from './config.mjs';
+import { toggleAutoFetch } from './preferences.mjs';
 import { install, setAutostart, sourceSkillNames, verify, lastAppliedAt, formatAgo } from './operations.mjs';
 import { ask, menuItems, printHarnessOptions, printHeader, printOptions, printSkillOptions, skillInfoFor, sym } from './ui.mjs';
 
@@ -100,16 +101,8 @@ export async function menuPrompt(config) {
             throw error;
           }
         } else if (choice === '6') {
-          const previous = config.autoFetch;
-          config.autoFetch = !previous;
-          try {
-            await setAutostart(config.runOnStartup, config.autoFetch);
-            await savePreferences(config);
-            console.log(`\nAuto background updates: ${config.autoFetch ? 'on' : 'off'}`);
-          } catch (error) {
-            config.autoFetch = previous;
-            throw error;
-          }
+          await toggleAutoFetch(config);
+          console.log(`\nAuto background updates: ${config.autoFetch ? 'on' : 'off'}`);
         } else if (choice === '7') {
           const previous = config.installMissing;
           config.installMissing = !previous;

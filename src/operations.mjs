@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { exists, home, root, scriptPath, sourceInstructions, sourceSkills, statePath, timestamp } from './env.mjs';
 import { harnesses, harnessWillInstall, relativeHome, targetPath } from './presets.mjs';
 import { loadConfig } from './config.mjs';
+import { acquireWatcher, readyWatcher, releaseWatcher, waitForNextFetch } from './watcher.mjs';
 import { dim, printHeader, printResultGroups, sym } from './ui.mjs';
 
 export async function removeEmptyParents(path) {
@@ -207,15 +208,15 @@ export function formatAgo(date, now = new Date()) {
 }
 
 export function git(...gitArgs) {
-  const result = spawnSync('git', gitArgs, { cwd: root, encoding: 'utf8' });
-  if (result.status !== 0) throw new Error((result.stderr || result.stdout || `git ${gitArgs.join(' ')} failed`).trim());
+  const result = spawnSync('git', gitArgs, { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 30_000 });
+  if (result.status !== 0) throw new Error((result.error?.message || result.stderr || result.stdout || `git ${gitArgs.join(' ')} failed`).trim());
   return result.stdout.trim();
 }
 
 export async function configureHooks(config) {
   const markerStart = '# ai-setup managed start';
   const markerEnd = '# ai-setup managed end';
-  const invocation = `"${process.execPath.replaceAll('\\', '/')}" "${scriptPath.replaceAll('\\', '/')}" install`;
+  const invocation = `"${process.execPath.replaceAll('\\', '/')}" "${scriptPath.replaceAll('\\', '/')}" install --home "${home.replaceAll('\\', '/')}"`;
   for (const name of ['post-merge', 'post-rewrite']) {
     const path = join(root, '.git', 'hooks', name);
     let content = await readFile(path, 'utf8').catch(() => '#!/bin/sh\n');
@@ -248,7 +249,7 @@ export async function setAutostart(enabled, autoFetch = false) {
   const startupCommand = autoFetch ? 'watch' : 'install';
   if (process.platform === 'win32') {
     path = files.windows;
-    content = `@echo off\r\nstart "" /min "${process.execPath}" "${scriptPath}" ${startupCommand}\r\n`;
+    content = `@echo off\r\n"${process.execPath}" "${scriptPath}" ${autoFetch ? 'background' : startupCommand}\r\n`;
   } else if (process.platform === 'darwin') {
     path = files.macos;
     content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -270,25 +271,29 @@ export async function setAutostart(enabled, autoFetch = false) {
 
 export async function watch(config) {
   if (!config.autoFetch) throw new Error('Auto background updates are turned off.');
-  const interval = 15 * 60_000;
-  await install(config, true);
-  console.log(`Applied local files. Watching for updates every ${interval / 60_000} minutes. Press Ctrl+C to stop.`);
-  while (true) {
-    try {
-      if (git('status', '--porcelain')) throw new Error('Repository has local changes. Skipping pull.');
-      git('fetch', '--quiet');
-      const branch = git('branch', '--show-current');
-      if (!branch) throw new Error('Repository is in detached HEAD state. Skipping pull.');
-      const upstream = git('rev-parse', '--abbrev-ref', `${branch}@{upstream}`);
-      const local = git('rev-parse', 'HEAD');
-      const remote = git('rev-parse', upstream);
-      if (local !== remote) {
-        if (git('merge-base', local, remote) !== local) throw new Error('Local and remote branches diverged. Refusing to merge.');
-        git('merge', '--ff-only', remote);
-        await install(await loadConfig(), true);
-        console.log(`[${new Date().toLocaleString()}] Pulled and applied ${remote.slice(0, 8)}.`);
-      }
-    } catch (error) { console.error(`[${new Date().toLocaleString()}] ${error.message}`); }
-    await new Promise(resolveTimer => setTimeout(resolveTimer, interval));
-  }
+  if (!await acquireWatcher()) return;
+  try {
+    const interval = 15 * 60_000;
+    await install(config, true);
+    await readyWatcher();
+    console.log(`Applied local files. Watching for updates every ${interval / 60_000} minutes. Press Ctrl+C to stop.`);
+    while (true) {
+      try {
+        if (git('status', '--porcelain')) throw new Error('Repository has local changes. Skipping pull.');
+        git('fetch', '--quiet');
+        const branch = git('branch', '--show-current');
+        if (!branch) throw new Error('Repository is in detached HEAD state. Skipping pull.');
+        const upstream = git('rev-parse', '--abbrev-ref', `${branch}@{upstream}`);
+        const local = git('rev-parse', 'HEAD');
+        const remote = git('rev-parse', upstream);
+        if (local !== remote) {
+          if (git('merge-base', local, remote) !== local) throw new Error('Local and remote branches diverged. Refusing to merge.');
+          git('merge', '--ff-only', remote);
+          await install(await loadConfig(), true);
+          console.log(`[${new Date().toLocaleString()}] Pulled and applied ${remote.slice(0, 8)}.`);
+        }
+      } catch (error) { console.error(`[${new Date().toLocaleString()}] ${error.message}`); }
+      if (!await waitForNextFetch(interval)) break;
+    }
+  } finally { await releaseWatcher(); }
 }

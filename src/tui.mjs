@@ -1,6 +1,7 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { harnesses, harnessIsInstalled, presets, relativeHome, targetPath } from './presets.mjs';
 import { savePreferences } from './config.mjs';
+import { toggleAutoFetch } from './preferences.mjs';
 import { install, setAutostart, sourceSkillNames, verify, lastAppliedAt, formatAgo } from './operations.mjs';
 import { bold, dim, green, harnessStatus, harnessStatusLabel, inverse, menuItems, skillInfoFor, sym } from './ui.mjs';
 import { matchDetail } from './operations.mjs';
@@ -341,14 +342,10 @@ export async function menuTui(config) {
       return undefined;
     }
     if (action === 'autofetch') {
-      const previous = config.autoFetch;
-      config.autoFetch = !previous;
       try {
-        await setAutostart(config.runOnStartup, config.autoFetch);
-        await savePreferences(config);
+        await toggleAutoFetch(config);
         toast(`Auto background updates: ${config.autoFetch ? 'on' : 'off'}`);
       } catch (error) {
-        config.autoFetch = previous;
         showError(error);
       }
       return undefined;

@@ -6,6 +6,7 @@ import { install, setAutostart, sourceSkillNames, verify, watch } from './operat
 import { harnessIsInstalled, presets } from './presets.mjs';
 import { menuPrompt } from './prompt.mjs';
 import { menuTui } from './tui.mjs';
+import { startWatcher } from './watcher.mjs';
 import { dim, green, harnessStatus, printHeader, printSkillOptions, skillInfoFor } from './ui.mjs';
 
 async function menu(config) {
@@ -27,6 +28,10 @@ try {
   else if (command === 'install') await install(config);
   else if (command === 'verify') await verify(config);
   else if (command === 'watch') await watch(config);
+  else if (command === 'background') {
+    if (!config.autoFetch) throw new Error('Auto background updates are turned off.');
+    await startWatcher();
+  }
   else if (command === 'autostart') await setAutostart(true, config.autoFetch);
   else if (command === 'no-autostart') await setAutostart(false);
   else if (command === 'list') {

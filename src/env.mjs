@@ -8,8 +8,8 @@ if (!process.versions.bun && Number(process.versions.node.split('.')[0]) < 18) {
   throw new Error('AI setup needs Node.js 18 or newer.');
 }
 
-export const scriptPath = fileURLToPath(import.meta.url);
-export const root = dirname(dirname(scriptPath));
+export const root = dirname(dirname(fileURLToPath(import.meta.url)));
+export const scriptPath = join(root, 'src', 'setup.mjs');
 export const configPath = join(root, 'config.json');
 export const defaultConfigPath = join(dirname(scriptPath), 'default-config.json');
 export const sourceInstructions = join(root, 'AGENTS.md');
