@@ -1,14 +1,29 @@
 import { stdout as output } from 'node:process';
 
-export function supportsUnicode(env = process.env, platform = process.platform) {
+/**
+ * @param {NodeJS.ProcessEnv} env
+ * @param {NodeJS.Platform} platform
+ * @param {boolean} isTTY
+ * @returns {boolean}
+ */
+export function supportsUnicode(env = process.env, platform = process.platform, isTTY = output.isTTY ?? false) {
   if (env.FORCE_UNICODE) return true;
   if (env.NO_UNICODE) return false;
   if (platform !== 'win32') return env.TERM !== 'linux';
+
+  // Native Windows consoles need no terminal-specific environment variables.
+  // Node writes Unicode to the console even when its code page is not UTF-8.
+  if (isTTY) return true;
+
+  // Pseudo-terminals and redirected UTF-8 output may have no console handle.
+  const locale = env.LC_ALL || env.LC_CTYPE || env.LANG || '';
+  if (/utf-?8/i.test(locale)) return true;
+
   return Boolean(env.CI || env.WT_SESSION || env.VSCODE_INJECTION || env.WINDOWS_TERMINAL
-    || env.TERMINUS_SUBLIME || env.ConEmuTask || env.HYPER)
+    || env.TERMINUS_SUBLIME || env.ConEmuTask || env.HYPER || env.ConEmuANSI === 'ON')
     || env.TERM_PROGRAM === 'vscode' || env.TERM_PROGRAM === 'WezTerm'
     || env.TERM_PROGRAM === 'Hyper' || env.TERM_PROGRAM === 'Alacritty'
-    || env.TERM === 'xterm-256color' || env.TERM === 'alacritty' || env.TERM === 'wezterm';
+    || /^xterm(?:-|$)/i.test(env.TERM ?? '') || env.TERM === 'alacritty' || env.TERM === 'wezterm';
 }
 
 export const unicode = supportsUnicode();
