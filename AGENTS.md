@@ -85,17 +85,31 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 - I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they pass usual tests and and committed along with the rest of the work.
 - If you have access to reading the current usage limits and scheduling new messages: when limits are about to expire you may schedule a message saying "continue" for after the limits come back
 
+# Hardware:
+
 ## Main PC
 
-OS: Windows 10
+OS: Windows 11
 Specs: NVIDIA RTX3070, intel i7 13th gen, 16GB ram
 
 ## School Laptop
 
 OS: Windows 11
+Type: Lenovo
 Specs: NVIDIA RTX4060 laptop edition, intel i7 13th gen, 16GB ram
 
-## Common Software Choices
+## Shitbox
+
+OS: Hyprland Arch (Caelestia)
+Type: TERRA PC-MICRO
+Specs: intel i5 8th gen, 8GB ram
+
+## Raspberry Pi 5
+
+OS: Raspberry Pi OS
+Specs: 8GB ram, 4-core ARM Cortex-A76 CPU, VideoCore VII GPU
+
+# Software
 
 Unity version: 6000.1.17f1 (Unity 6, 2025)
-Preferred Package manager: Bun
+Preferred package manager: Bun
