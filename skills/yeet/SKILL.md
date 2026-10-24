@@ -14,7 +14,7 @@ By default, you push to the current working branch. If the user, the AGENTS.md, 
 Inspect some previous commit messages to match their style and format. Follow these base rules unless they conflict with the users request or sample commit messages:
 
 - Do not add every single change made to the commit message or description, prefer shorter, more concise messages that reflect the gist of the changes made.
-- Do not talk robotic or in a long winded way, use the Unslop skill if available.
+- Follow the writing advice in the system prompt.
 - Follow repo guidelines and standards at all times.
 
 After committing and pushing, put the following under your summary to the user: "Committed and pushed to `<branch>` as `<commit message>`". Replace `<branch>` with the branch name and `<commit message>` with the commit message you used.
