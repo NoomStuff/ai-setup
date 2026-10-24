@@ -83,7 +83,12 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 - Ensure head is on latest commit on the first turn
 - Do not make changes to the README.md, CONTRIBUTING.md, or AGENTS.md files unless it is clearly in scope or asked.
 - I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they pass usual tests and and committed along with the rest of the work.
-- If you have access to reading the current usage limits and scheduling new messages: when limits are about to expire you may schedule a message saying "continue" for after the limits come back
+
+# Continue after rate limits
+
+If you have access to reading the current usage limits and scheduling new messages you can schedule a message saying "continue" in the case of usage almost being depleted.
+
+You will schedule that message in the current thread for after the rate limits are back, you will keep doing this until the task is finished.
 
 # Hardware:
 
