@@ -88,7 +88,7 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 If you have access to reading the current usage limits and scheduling new messages you can schedule a message saying "continue" in the case of usage almost being depleted.
 
-You will schedule that message in the current thread for after the rate limits are back, you will keep doing this until the task is finished.
+You will schedule that message in the current thread for 1 minute after the rate limits are back, you will keep doing this until the task is finished.
 
 # Hardware:
 
