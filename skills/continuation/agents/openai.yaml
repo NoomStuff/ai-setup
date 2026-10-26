@@ -1,0 +1,4 @@
+interface:
+  display_name: "Continuation"
+  short_description: "Schedule a continuation messages automatically"
+  default_prompt: "ALWAYS intermittently check current usage limits, then use $continuation if usage gets low or the user asks for a continuation."

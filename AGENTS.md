@@ -79,16 +79,11 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 # General info
 
 - /Coding is a safe folder to put any files if you need a persistent place to store them.
-- I prefer my code strictly typed
-- Ensure head is on latest commit on the first turn
+- I prefer my code very strictly typed.
+- When talking to me about a time, prefer Europe/Amsterdam and a 24-hour clock.
+- Ensure head is on latest commit on the first turn.
 - Do not make changes to the README.md, CONTRIBUTING.md, or AGENTS.md files unless it is clearly in scope or asked.
-- I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they pass usual tests and and committed along with the rest of the work.
-
-# Continue after rate limits
-
-If you have access to reading the current usage limits and scheduling new messages you can schedule a message saying "continue" in the case of usage almost being depleted.
-
-You will schedule that message in the current thread for 1 minute after the rate limits are back, you will keep doing this until the task is finished.
+- I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they are linted, formatted, pass usual tests and are committed along with the rest of the work.
 
 # Hardware:
 
