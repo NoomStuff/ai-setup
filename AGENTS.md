@@ -78,9 +78,9 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 # General info
 
-- /Coding is a safe folder to put any files if you need a persistent place to store them.
+- A pre-existing /Coding folder is a safe folder to put any files if you need a persistent place to store them.
 - I prefer my code very strictly typed.
-- When talking to me about a time, prefer Europe/Amsterdam and a 24-hour clock.
+- When talking to me about a time, prefer Europe/Amsterdam and a 24-hour clock. You don't need to state that you used this format.
 - Ensure head is on latest commit on the first turn.
 - Do not make changes to the README.md, CONTRIBUTING.md, or AGENTS.md files unless it is clearly in scope or asked.
 - I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they are linted, formatted, pass usual tests and are committed along with the rest of the work.
