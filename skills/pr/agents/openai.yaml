@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR"
+  short_description: "Open, update, and merge pull requests"
+  default_prompt: "Use $pr when the user asks to open, update, merge, or watch a pull request."
