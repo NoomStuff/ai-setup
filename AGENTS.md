@@ -78,36 +78,45 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 # General info
 
-- A pre-existing /Coding folder is a safe folder to put any files if you need a persistent place to store them.
+- A pre-existing `/Coding` folder is a safe folder to put working files (not tool installs) if you need a persistent place to store them, for project specific tasks use an uncommitted working folder like `/work` if available.
 - I prefer my code very strictly typed.
-- When talking to me about a time, prefer Europe/Amsterdam and a 24-hour clock. You don't need to state that you used this format.
+- When talking to me about a time, prefer Europe/Amsterdam and a 24-hour clock. You don't need to state that you used this format unless relevant.
 - Ensure head is on latest commit on the first turn.
-- Do not make changes to the README.md, CONTRIBUTING.md, or AGENTS.md files unless it is clearly in scope or asked.
-- I may sometimes make (unrelated) code changes during runs, please retain those changes as well as treat them as part of the current work, making sure they are linted, formatted, pass usual tests and are committed along with the rest of the work.
+- Do not make changes to the README.md, CONTRIBUTING.md, AGENTS.md or other user/agent facing files unless it is clearly in scope or asked.
+- I may sometimes make (unrelated) code changes during or between runs, please retain those changes as well as treat them as part of the current work, making sure they are checked and committed along with the rest of the work.
 
 # Hardware:
 
-## Main PC
+## Main PC (Desktop-N53CKER)
 
 OS: Windows 11
 Specs: NVIDIA RTX3070, intel i7 13th gen, 16GB ram
+Code Folder: `D:\Coding`
 
-## School Laptop
+## School Laptop (Dave)
 
 OS: Windows 11
 Type: Lenovo
 Specs: NVIDIA RTX4060 laptop edition, intel i7 13th gen, 16GB ram
+Code Folder: `C:\Users\NoomS\Coding`
 
 ## Shitbox
 
 OS: Hyprland Arch (Caelestia)
 Type: TERRA PC-MICRO
 Specs: intel i5 8th gen, 8GB ram
+Code Folder: `/home/noom/Coding`
 
 ## Raspberry Pi 5
 
 OS: Raspberry Pi OS
 Specs: 8GB ram, 4-core ARM Cortex-A76 CPU, VideoCore VII GPU
+
+## Synology DS116
+
+OS: Synology DSM 7.2
+Specs: Marvell Armada 385 88F6820, 454 GB HDD
+
 
 # Software
 
