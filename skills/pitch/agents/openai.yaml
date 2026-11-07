@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pitch"
+  short_description: "Mock up changes and pick the ones to ship"
+  default_prompt: "Use $pitch when the user asks to pitch or mock them a set of designs or improvements."
