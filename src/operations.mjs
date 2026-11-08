@@ -65,20 +65,40 @@ export async function sourceSkillNames() {
   return names;
 }
 
-export async function install(config, opts = false) {
-  const silent = typeof opts === 'object' ? !!opts.quiet : !!opts;
+async function installPlan(config) {
   const allSkills = await sourceSkillNames();
   const skillNames = allSkills.filter(name => !config.disabledSkills.includes(name));
-  const backupRoot = join(home, '.ai-setup-backup', timestamp());
-  const results = [];
-  const managedPaths = [];
-  const selectedHarnesses = harnesses(config);
   const activeHarnesses = [];
   const skippedHarnesses = [];
-  for (const harness of selectedHarnesses) {
+  for (const harness of harnesses(config)) {
     if (await harnessWillInstall(harness, config)) activeHarnesses.push(harness);
     else skippedHarnesses.push(harness);
   }
+  const managedPaths = activeHarnesses.flatMap(harness => [
+    ...(harness.instructions ? [targetPath(harness.instructions)] : []),
+    ...(harness.skills ? skillNames.map(skill => join(targetPath(harness.skills), skill)) : [])
+  ]);
+  return { skillNames, activeHarnesses, skippedHarnesses, managedPaths };
+}
+
+// True when every target matches the repository and no removed skill or harness is still installed.
+export async function isApplied(config) {
+  const state = JSON.parse(await readFile(statePath, 'utf8').catch(() => 'null'));
+  if (!Array.isArray(state?.managedPaths)) return false;
+  const { managedPaths } = await installPlan(config);
+  const previous = new Set(state.managedPaths);
+  if (managedPaths.length !== previous.size || managedPaths.some(path => !previous.has(path))) return false;
+  try { await verify(config, true); }
+  catch { return false; }
+  return true;
+}
+
+export async function install(config, opts = false) {
+  const silent = typeof opts === 'object' ? !!opts.quiet : !!opts;
+  const { skillNames, activeHarnesses, skippedHarnesses } = await installPlan(config);
+  const backupRoot = join(home, '.ai-setup-backup', timestamp());
+  const results = [];
+  const managedPaths = [];
   for (const harness of activeHarnesses) {
     if (harness.instructions) {
       const destination = targetPath(harness.instructions);
@@ -217,7 +237,7 @@ export async function configureHooks(config) {
   const markerStart = '# ai-setup managed start';
   const markerEnd = '# ai-setup managed end';
   const invocation = `"${process.execPath.replaceAll('\\', '/')}" "${scriptPath.replaceAll('\\', '/')}" install --home "${home.replaceAll('\\', '/')}"`;
-  for (const name of ['post-merge', 'post-rewrite']) {
+  for (const name of ['post-commit', 'post-merge', 'post-rewrite']) {
     const path = join(root, '.git', 'hooks', name);
     let content = await readFile(path, 'utf8').catch(() => '#!/bin/sh\n');
     content = content.replace(new RegExp(`\\n?${markerStart}[\\s\\S]*?${markerEnd}\\n?`, 'g'), '\n');
@@ -286,11 +306,20 @@ export async function watch(config) {
         const upstream = git('rev-parse', '--abbrev-ref', `${branch}@{upstream}`);
         const local = git('rev-parse', 'HEAD');
         const remote = git('rev-parse', upstream);
-        if (local !== remote) {
-          if (git('merge-base', local, remote) !== local) throw new Error('Local and remote branches diverged. Refusing to merge.');
+        let pulled = false;
+        if (local !== remote && git('merge-base', local, remote) === local) {
           git('merge', '--ff-only', remote);
-          await install(await loadConfig(), true);
-          console.log(`[${new Date().toLocaleString()}] Pulled and applied ${remote.slice(0, 8)}.`);
+          pulled = true;
+        }
+        // Local commits, branch switches and config edits never pull anything, so compare targets too.
+        const current = await loadConfig();
+        if (pulled || !await isApplied(current)) {
+          await install(current, true);
+          const applied = pulled ? `Pulled and applied ${remote.slice(0, 8)}` : `Applied ${git('rev-parse', '--short=8', 'HEAD')}`;
+          console.log(`[${new Date().toLocaleString()}] ${applied}.`);
+        }
+        if (!pulled && local !== remote && git('merge-base', local, remote) !== remote) {
+          throw new Error('Local and remote branches diverged. Refusing to merge.');
         }
       } catch (error) { console.error(`[${new Date().toLocaleString()}] ${error.message}`); }
       if (!await waitForNextFetch(interval)) break;

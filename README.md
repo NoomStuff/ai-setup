@@ -25,7 +25,7 @@ The setup needs Bun or Node.js 18 or newer.
 
 Startup and automatic fetching are off by default. Turn on `runOnStartup` to apply the setup when you sign in. Turn on `autoFetch` to also pull changes every 15 minutes. The watcher accepts fast-forward updates only. It will not pull over local changes or merge divergent branches.
 
-Git hooks reapply the setup after you manually pull or rebase this repository.
+Git hooks reapply the setup after you commit, pull or rebase in this repository. The watcher also reapplies on each check when installed files no longer match a clean checkout, so local commits and config changes land even without a pull.
 
 ## Supported apps
 
