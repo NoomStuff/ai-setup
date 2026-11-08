@@ -8,7 +8,7 @@ description: Use when the user asks to pitch or mock them a set of designs or im
 Pitch the user a set of improvements by building each one in the real project and showing it on one page as an after screenshot, paired with a before and a slider when it changes something that already exists. Pitches can be anything from a big overhaul to a small win or a fresh mockup. They are visual proposals only, so don't commit anything unapproved.
 
 1. Look around and/or use the project to look for the things that could be improved.
-2. Build each pitch in the real code, one at a time. Take its after shot, and a before shot when there is a before, save it with `git add -N <files it added> && git diff > pitches/03-name.patch` so new files are included, and revert before the next one, removing any files it added, so every pair shows exactly one change.
+2. Build each pitch in the real code, one at a time, editing existing code in place instead of appending overrides. Take an after shot of every screen it touches, plus a before for each screen that already existed, save it with `git add -N <files it added> && git diff > pitches/03-name.patch` so new files are included, and revert and rebuild before the next one, removing any files it added, so every pair shows exactly one change.
 3. Take every shot with a fixed window size, data and scroll position. Pairs must have the same pixel dimensions for accurate comparison.
 4. Fill in the template below and save it as `pitches.html` in a folder like `/pitches/` (prefer to place this folder in pre-existing gitignored working folders if they exist, pitches must never be committed). Embed every image in the data block as a `data:image/png;base64,...` URI, so the file still works when it's opened on a phone, another device or over a remote connection.
 5. Check the final page before you show it to the user.
@@ -17,7 +17,7 @@ Pitch the user a set of improvements by building each one in the real project an
 
 Show the pitches inline when the harness can render HTML in the conversation. Check your skills and tools for one that does, load it, and follow its rules over this template's where they conflict, adapting the page to fit.
 
-- T3 Code: `html_preview`, then `html_render`. Point images at absolute file paths, which T3 inlines itself. Frames stop at 2000px tall.
+- T3 Code: `html_preview`, then `html_render`. Point images at absolute file paths, which T3 inlines itself, including paths in the JSON block. Frames stop at 2000px tall.
 - Codex in the ChatGPT desktop app: the `visualize` skill. It takes an HTML fragment under 1 MB in the thread's visualization folder, referenced with `visualize{"path":"...","mode":"wide"}` on its own line of the final answer.
 - Claude with artifacts: load `artifact-design`, then publish with the `Artifact` tool and pass the shots as supporting files.
 - Or use a similar flow if your harness supports it. 
@@ -62,6 +62,7 @@ When the user picks pitches, only execute those. Make sure that only the pitched
   .note { color: var(--muted); }
   .warning { margin: 12px 0 0; padding: 8px 12px; border: 1px solid var(--warn); border-radius: 6px; background: var(--warn-bg); color: var(--warn); font-size: 0.9rem; font-weight: 600; }
   .warning[hidden] { display: none; }
+  .shot-label { margin: 20px 0 0; color: var(--muted); font-size: 0.9rem; font-weight: 600; }
   .compare { --position: 50%; position: relative; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); touch-action: pan-y; user-select: none; cursor: ew-resize; }
   .compare img { display: block; pointer-events: none; -webkit-user-drag: none; }
   .compare img.before { width: 100%; height: auto; }
@@ -88,7 +89,7 @@ When the user picks pitches, only execute those. Make sure that only the pitched
   <main id="pitches"></main>
 </div>
 
-<!-- Only edit this JSON block. Image paths are relative to this file. "before" is optional; leave it out for an after-only pitch. Every before and after pair must have identical pixel dimensions. -->
+<!-- Only edit this JSON block. Image paths are relative to this file. Give a pitch one shot per screen it touches. "label" is optional, and so is "before": leave it out for a screen that is new. Every before and after pair must have identical pixel dimensions. -->
 <script type="application/json" id="data">
 {
   "title": "Pitch title",
@@ -99,8 +100,10 @@ When the user picks pitches, only execute those. Make sure that only the pitched
       "scope": "Small",
       "why": "The problem visible in the before shot, what changed, and what it does for the user.",
       "note": "Optional tradeoffs or open questions.",
-      "before": "shots/01/before.png",
-      "after": "shots/01/after.png"
+      "shots": [
+        { "label": "Settings", "before": "shots/01/settings-before.png", "after": "shots/01/settings-after.png" },
+        { "label": "New welcome screen", "after": "shots/01/welcome-after.png" }
+      ]
     }
   ]
 }
@@ -115,10 +118,12 @@ When the user picks pitches, only execute those. Make sure that only the pitched
   document.getElementById("summary").textContent = data.summary || "";
   const toc = document.getElementById("toc");
   const main = document.getElementById("pitches");
-  const template = `
+  const header = `
     <h2><span class="num"></span><span class="title"></span><span class="scope"></span></h2>
     <p class="why"></p>
-    <p class="note"></p>
+    <p class="note"></p>`;
+  const shotTemplate = `
+    <p class="shot-label"></p>
     <p class="warning" role="alert" hidden></p>
     <div class="compare">
       <img class="before" alt="">
@@ -139,21 +144,32 @@ When the user picks pitches, only execute those. Make sure that only the pitched
 
     const section = document.createElement("section");
     section.id = `pitch-${n}`;
-    section.innerHTML = template;
+    section.innerHTML = header;
     main.appendChild(section);
-    const q = (sel) => section.querySelector(sel);
-    q(".num").textContent = String(n).padStart(2, "0");
-    q(".title").textContent = pitch.title;
-    if (pitch.scope) q(".scope").textContent = pitch.scope; else q(".scope").remove();
-    q(".why").textContent = pitch.why;
-    if (pitch.note) q(".note").textContent = pitch.note; else q(".note").remove();
+    const h = (sel) => section.querySelector(sel);
+    h(".num").textContent = String(n).padStart(2, "0");
+    h(".title").textContent = pitch.title;
+    if (pitch.scope) h(".scope").textContent = pitch.scope; else h(".scope").remove();
+    h(".why").textContent = pitch.why;
+    if (pitch.note) h(".note").textContent = pitch.note; else h(".note").remove();
+
+    (pitch.shots || []).forEach((shot) => addShot(section, pitch.title, shot));
+  });
+
+  function addShot(section, pitchTitle, shot) {
+    const figure = document.createElement("div");
+    figure.innerHTML = shotTemplate;
+    section.appendChild(figure);
+    const q = (sel) => figure.querySelector(sel);
+    const name = shot.label ? `${pitchTitle}, ${shot.label}` : pitchTitle;
+    if (shot.label) q(".shot-label").textContent = shot.label; else q(".shot-label").remove();
 
     const compare = q(".compare"), before = q("img.before"), after = q("img.after");
     const divider = q(".divider"), warning = q(".warning");
     const labelBefore = q(".label.before"), labelAfter = q(".label.after");
-    before.alt = `${pitch.title}, before`;
-    after.alt = `${pitch.title}, after`;
-    divider.setAttribute("aria-label", `${pitch.title} comparison`);
+    before.alt = `${name}, before`;
+    after.alt = `${name}, after`;
+    divider.setAttribute("aria-label", `${name} comparison`);
 
     const loaded = (img) => new Promise((resolve, reject) => {
       img.addEventListener("load", () => img.decode().then(resolve, resolve), { once: true });
@@ -165,11 +181,11 @@ When the user picks pitches, only execute those. Make sure that only the pitched
       compare.hidden = true;
     };
 
-    if (!pitch.before) {
+    if (!shot.before) {
       compare.classList.add("single");
       compare.replaceChildren(after);
       loaded(after).catch(failed);
-      after.src = pitch.after;
+      after.src = shot.after;
       return;
     }
 
@@ -212,15 +228,15 @@ When the user picks pitches, only execute those. Make sure that only the pitched
     });
 
     const ready = Promise.all([loaded(before), loaded(after)]);
-    before.src = pitch.before;
-    after.src = pitch.after;
+    before.src = shot.before;
+    after.src = shot.after;
     ready.then(() => {
       const [bw, bh, aw, ah] = [before.naturalWidth, before.naturalHeight, after.naturalWidth, after.naturalHeight];
       if (bw === aw && bh === ah) return;
       warning.textContent = `Sizes differ: before is ${bw}×${bh}, after is ${aw}×${ah}. Retake both at the same size.`;
       warning.hidden = false;
     }, failed);
-  });
+  }
 })();
 </script>
 </body>
